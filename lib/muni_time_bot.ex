@@ -13,7 +13,15 @@ defmodule MuniTimeBot do
     answer(
       cnt,
       "Welcome to Muni Time Bot, #{first_name}! " <>
-        "Please send me your location to find out the time for next muni near you!"
+        "Please send me your location to find out the time for next muni near you!",
+      reply_markup: %{
+        keyboard: [[%{request_location: true, text: "Send Location"}]],
+        resize_keyboard: true
+      }
     )
+  end
+
+  def handle({:location, %{latitude: latitude, longitude: longitude}}, cnt) do
+    answer(cnt, "Your location is #{latitude}, #{longitude}!")
   end
 end
