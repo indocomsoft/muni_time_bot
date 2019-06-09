@@ -3,6 +3,9 @@ defmodule MuniTimeBot do
   Documentation for MuniTimeBot.
   """
 
+  alias MuniTimeBot.API.Stop
+  alias MuniTimeBot.Coordinate
+
   use ExGram.Bot, name: Application.get_env(:muni_time_bot, :name)
 
   command("start")
@@ -21,7 +24,27 @@ defmodule MuniTimeBot do
     )
   end
 
-  def handle({:location, %{latitude: latitude, longitude: longitude}}, cnt) do
-    answer(cnt, "Your location is #{latitude}, #{longitude}!")
+  def handle(command = {:location, %{latitude: latitude, longitude: longitude}}, cnt) do
+    with {:ok, stops} <- Stop.all_stops(),
+         {:ok, my_coord} <- Coordinate.new(latitude, longitude) do
+      nearest_stops =
+        stops
+        |> Enum.map(fn stop = %Stop{coordinate: coordinate} ->
+          {Coordinate.distance(my_coord, coordinate), stop}
+        end)
+        |> Enum.sort_by(fn {distance, _stop} -> distance end)
+        |> Enum.take(5)
+        |> Enum.map(fn {distance, %Stop{title: title}} ->
+          "- #{title}: #{Float.round(distance, 2)} m"
+        end)
+        |> Enum.join("\n")
+
+      answer(
+        cnt,
+        "Your location is #{latitude}, #{longitude}! The 5 nearest stops are: \n#{nearest_stops}"
+      )
+    else
+      _ -> handle(command, cnt)
+    end
   end
 end

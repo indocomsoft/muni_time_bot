@@ -1,17 +1,17 @@
 defmodule MuniTimeBot.API.Stop do
-  @enforce_keys ~w(stop_id latitude longitude tag route title)a
+  @enforce_keys ~w(stop_id coordinate tag route title)a
   defstruct @enforce_keys
+
+  alias MuniTimeBot.API.Route
+  alias MuniTimeBot.Coordinate
 
   @type t :: %__MODULE__{
           stop_id: String.t(),
-          latitude: float(),
-          longitude: float(),
+          coordinate: Coordinate.t(),
           tag: String.t(),
           route: String.t(),
           title: String.t()
         }
-
-  alias MuniTimeBot.API.Route
 
   @spec all_stops :: {:ok, [t()]} | {:error, any()}
   def all_stops do
@@ -31,39 +31,42 @@ defmodule MuniTimeBot.API.Stop do
     end
   end
 
-  @spec new(String.t(), any()) :: {:ok, __MODULE__.t()} | :error
+  @spec new(String.t(), any()) :: {:ok, t()} | :error
 
   def new(route, api_result = %{"lat" => latitude, "lon" => longitude})
       when is_binary(latitude) and is_binary(longitude) do
     with {float_latitude, _} <- Float.parse(latitude),
-         {float_longitude, _} <- Float.parse(longitude) do
-      new(route, %{api_result | "lat" => float_latitude, "lon" => float_longitude})
+         {float_longitude, _} <- Float.parse(longitude),
+         {:ok, coordinate} <- Coordinate.new(float_latitude, float_longitude) do
+      new(route, api_result, coordinate)
     else
       :error -> :error
     end
   end
 
-  def new(route, %{
-        "stopId" => stop_id,
-        "lat" => latitude,
-        "lon" => longitude,
-        "tag" => tag,
-        "title" => title
-      })
-      when is_binary(route) and is_binary(stop_id) and is_float(latitude) and is_float(longitude) and
-             is_binary(tag) and is_binary(title) do
+  def new(_, _) do
+    :error
+  end
+
+  @spec new(String.t(), %{required(String.t()) => String.t()}, Coordinate.t()) ::
+          {:ok, t()} | :error
+  defp new(
+         route,
+         %{"stopId" => stop_id, "tag" => tag, "title" => title},
+         coordinate = %Coordinate{}
+       )
+       when is_binary(route) and is_binary(stop_id) and is_binary(tag) and is_binary(title) do
     {:ok,
      %__MODULE__{
        stop_id: stop_id,
-       latitude: latitude,
-       longitude: longitude,
+       coordinate: coordinate,
        tag: tag,
        route: route,
        title: title
      }}
   end
 
-  def new(_, _) do
+  defp new(_route, _api_result, _coordinate) do
     :error
   end
 end
