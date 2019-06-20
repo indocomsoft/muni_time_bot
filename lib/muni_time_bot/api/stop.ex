@@ -90,6 +90,9 @@ defmodule MuniTimeBot.API.Stop do
 
       {:ok, %{"predictions" => raw_prediction}} when is_map(raw_prediction) ->
         {:ok, [Prediction.new(raw_prediction)]}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 end

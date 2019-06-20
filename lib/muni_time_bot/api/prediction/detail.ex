@@ -30,7 +30,7 @@ defmodule MuniTimeBot.API.Prediction.Detail do
          is_delayed: is_delayed
        }}
     else
-      {:error, reason} -> {:error, reason}
+      :error -> {:error, __MODULE__}
     end
   end
 
