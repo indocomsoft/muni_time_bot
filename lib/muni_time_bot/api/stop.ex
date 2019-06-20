@@ -89,7 +89,7 @@ defmodule MuniTimeBot.API.Stop do
         end
 
       {:ok, %{"predictions" => raw_prediction}} when is_map(raw_prediction) ->
-        Prediction.new(raw_prediction)
+        {:ok, [Prediction.new(raw_prediction)]}
     end
   end
 end
