@@ -2,7 +2,9 @@ defmodule MuniTimeBot.API.Stop do
   @enforce_keys ~w(stop_id coordinate tag route title)a
   defstruct @enforce_keys
 
+  alias MuniTimeBot.API
   alias MuniTimeBot.API.Route
+  alias MuniTimeBot.API.Prediction
   alias MuniTimeBot.Coordinate
 
   @type t :: %__MODULE__{
@@ -68,5 +70,26 @@ defmodule MuniTimeBot.API.Stop do
 
   defp new(_route, _api_result, _coordinate) do
     :error
+  end
+
+  @spec predictions(t()) :: {:ok, [Prediction.t()]} | :error
+  def predictions(%__MODULE__{stop_id: stop_id}) when is_binary(stop_id) do
+    case API.request_muni(%{command: "predictions", stopId: stop_id}) do
+      {:ok, %{"predictions" => raw_predictions}} when is_list(raw_predictions) ->
+        raw_predictions
+        |> Enum.reduce_while([], fn raw_prediction, acc ->
+          case Prediction.new(raw_prediction) do
+            {:ok, prediction = %Prediction{}} -> {:cont, [prediction | acc]}
+            {:error, reason} -> {:halt, {:error, reason}}
+          end
+        end)
+        |> case do
+          predictions when is_list(predictions) -> {:ok, predictions}
+          {:error, reason} -> {:error, reason}
+        end
+
+      {:ok, %{"predictions" => raw_prediction}} when is_map(raw_prediction) ->
+        Prediction.new(raw_prediction)
+    end
   end
 end
