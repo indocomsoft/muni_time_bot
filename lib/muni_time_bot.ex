@@ -27,24 +27,42 @@ defmodule MuniTimeBot do
   def handle(command = {:location, %{latitude: latitude, longitude: longitude}}, cnt) do
     with {:ok, stops} <- Stop.all_stops(),
          {:ok, my_coord} <- Coordinate.new(latitude, longitude) do
-      nearest_stops =
+      message =
         stops
         |> Enum.map(fn stop = %Stop{coordinate: coordinate} ->
           {Coordinate.distance(my_coord, coordinate), stop}
         end)
         |> Enum.sort_by(fn {distance, _stop} -> distance end)
         |> Enum.take(5)
-        |> Enum.map(fn {distance, %Stop{title: title}} ->
-          "- #{title}: #{Float.round(distance, 2)} m"
-        end)
-        |> Enum.join("\n")
+        |> Enum.map(fn {distance, stop = %Stop{title: title, stop_id: stop_id}} ->
+          "*#{title}* (#{Float.round(distance, 2)} m, stopId #{stop_id})\n" <>
+            case Stop.predictions(stop) do
+              {:ok, predictions} ->
+                for %{directions: directions, route_title: route_title} <- predictions,
+                    %{details: details, title: direction_title} <- directions do
+                  "#{route_title} #{direction_title}\n`#{format_details(details)}`"
+                end
+                |> Enum.join("\n")
 
-      answer(
-        cnt,
-        "Your location is #{latitude}, #{longitude}! The 5 nearest stops are: \n#{nearest_stops}"
-      )
+              {:error, _} ->
+                "Error retrieving data"
+            end
+        end)
+        |> Enum.join("\n\n")
+
+      answer(cnt, message, parse_mode: "markdown")
     else
       _ -> handle(command, cnt)
     end
+  end
+
+  defp format_details([]) do
+    "None"
+  end
+
+  defp format_details(details) when is_list(details) do
+    details
+    |> Enum.map(fn %{minutes: minutes} -> minutes end)
+    |> Enum.join(" | ")
   end
 end
