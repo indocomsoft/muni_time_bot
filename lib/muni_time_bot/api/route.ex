@@ -22,23 +22,30 @@ defmodule MuniTimeBot.API.Route do
   def all_routes(opts \\ []) when is_list(opts) do
     case API.request_muni(%{command: "routeList"}, opts) do
       {:ok, %{"route" => routes}} when is_list(routes) ->
-        routes
-        |> Enum.reduce_while([], fn api_route, acc ->
-          case new(api_route) do
-            {:ok, route = %__MODULE__{}} -> {:cont, [route | acc]}
-            :error -> {:halt, :error}
-          end
-        end)
-        |> case do
-          parsed_routes when is_list(parsed_routes) -> {:ok, parsed_routes}
-          :error -> {:error, :invalid_api_response}
-        end
+        handle_routes(routes)
+
+      {:ok, %{"route" => route}} when is_map(route) ->
+        handle_routes([route])
 
       {:ok, _} ->
         {:error, :invalid_api_response}
 
       {:error, reason} ->
         {:error, reason}
+    end
+  end
+
+  defp handle_routes(routes) when is_list(routes) do
+    routes
+    |> Enum.reduce_while([], fn api_route, acc ->
+      case new(api_route) do
+        {:ok, route = %__MODULE__{}} -> {:cont, [route | acc]}
+        :error -> {:halt, :error}
+      end
+    end)
+    |> case do
+      parsed_routes when is_list(parsed_routes) -> {:ok, parsed_routes}
+      :error -> {:error, :invalid_api_response}
     end
   end
 

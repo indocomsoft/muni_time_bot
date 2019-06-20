@@ -22,18 +22,22 @@ defmodule MuniTimeBot.API.Stop do
   @spec all_stops :: {:ok, [t()]} | {:error, any()}
   def all_stops do
     case Route.all_routes() do
-      {:ok, routes} when is_list(routes) ->
-        routes
-        |> Enum.reduce_while([], fn route, acc ->
-          case Route.load(route) do
-            {:ok, %Route{stops: stops}} -> {:cont, acc ++ stops}
-            {:error, reason} -> {:halt, {:error, reason}}
-          end
-        end)
-        |> case do
-          routes when is_list(routes) -> {:ok, Enum.uniq_by(routes, & &1.stop_id)}
-          {:error, reason} -> {:error, reason}
-        end
+      {:ok, routes} when is_list(routes) -> handle_routes(routes)
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp handle_routes(routes) when is_list(routes) do
+    routes
+    |> Enum.reduce_while([], fn route, acc ->
+      case Route.load(route) do
+        {:ok, %Route{stops: stops}} -> {:cont, acc ++ stops}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+    |> case do
+      routes when is_list(routes) -> {:ok, Enum.uniq_by(routes, & &1.stop_id)}
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -79,24 +83,28 @@ defmodule MuniTimeBot.API.Stop do
   @spec predictions(t()) :: {:ok, [Prediction.t()]} | {:error, any()}
   def predictions(%__MODULE__{stop_id: stop_id}) when is_binary(stop_id) do
     case API.request_muni(%{command: "predictions", stopId: stop_id}) do
-      {:ok, %{"predictions" => raw_predictions}} when is_list(raw_predictions) ->
-        raw_predictions
-        |> Enum.reduce_while([], fn raw_prediction, acc ->
-          case Prediction.new(raw_prediction) do
-            {:ok, prediction = %Prediction{}} -> {:cont, [prediction | acc]}
-            {:error, reason} -> {:halt, {:error, reason}}
-          end
-        end)
-        |> case do
-          predictions when is_list(predictions) -> {:ok, predictions}
-          {:error, reason} -> {:error, reason}
-        end
+      {:ok, %{"predictions" => predictions}} when is_list(predictions) ->
+        handle_prediction(predictions)
 
-      {:ok, %{"predictions" => raw_prediction}} when is_map(raw_prediction) ->
-        {:ok, [Prediction.new(raw_prediction)]}
+      {:ok, %{"predictions" => prediction}} when is_map(prediction) ->
+        handle_prediction([prediction])
 
       {:error, reason} ->
         {:error, reason}
+    end
+  end
+
+  defp handle_prediction(predictions) when is_list(predictions) do
+    predictions
+    |> Enum.reduce_while([], fn raw_prediction, acc ->
+      case Prediction.new(raw_prediction) do
+        {:ok, prediction = %Prediction{}} -> {:cont, [prediction | acc]}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+    |> case do
+      predictions when is_list(predictions) -> {:ok, predictions}
+      {:error, reason} -> {:error, reason}
     end
   end
 end

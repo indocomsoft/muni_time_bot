@@ -40,8 +40,10 @@ defmodule MuniTimeBot.Coordinate do
         latitude: lat2,
         longitude: lon2
       }) do
-    lat_sin = ((lat2 - lat1) / 2) |> deg_to_rad() |> :math.sin()
-    lon_sin = ((lon2 - lon1) / 2) |> deg_to_rad() |> :math.sin()
+    half_dlat = (lat2 - lat1) / 2
+    half_dlon = (lon2 - lon1) / 2
+    lat_sin = half_dlat |> deg_to_rad() |> :math.sin()
+    lon_sin = half_dlon |> deg_to_rad() |> :math.sin()
 
     lat1_rad = deg_to_rad(lat1)
     lat2_rad = deg_to_rad(lat2)

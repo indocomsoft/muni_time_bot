@@ -35,20 +35,7 @@ defmodule MuniTimeBot do
           end)
           |> Enum.sort_by(fn {distance, _stop} -> distance end)
           |> Enum.take(5)
-          |> Enum.map(fn {distance, stop = %Stop{title: title, stop_id: stop_id}} ->
-            "*#{title}* (#{Float.round(distance, 2)} m, stopId #{stop_id})\n" <>
-              case Stop.predictions(stop) do
-                {:ok, predictions} ->
-                  for %{directions: directions, route_title: route_title} <- predictions,
-                      %{details: details, title: direction_title} <- directions do
-                    "#{route_title} #{direction_title}\n`#{format_details(details)}`"
-                  end
-                  |> Enum.join("\n")
-
-                {:error, _} ->
-                  "Error retrieving data"
-              end
-          end)
+          |> Enum.map(fn {distance, stop = %Stop{}} -> format_stop(stop, distance) end)
           |> Enum.join("\n\n")
 
         answer(cnt, message, parse_mode: "markdown")
@@ -58,7 +45,25 @@ defmodule MuniTimeBot do
     end
   end
 
-  @spec format_details(list()) :: String.t()
+  defp format_stop(stop = %Stop{title: title, stop_id: stop_id}, distance)
+       when is_float(distance) do
+    predictions_formatted =
+      case Stop.predictions(stop) do
+        {:ok, predictions} -> format_predictions(predictions)
+        {:error, _} -> "Error retrieving data"
+      end
+
+    "*#{title}* (#{Float.round(distance, 2)} m, stopId #{stop_id})\n#{predictions_formatted}"
+  end
+
+  defp format_predictions(predictions) when is_list(predictions) do
+    for %{directions: directions, route_title: route_title} <- predictions,
+        %{details: details, title: direction_title} <- directions do
+      "#{route_title} #{direction_title}\n`#{format_details(details)}`"
+    end
+    |> Enum.join("\n")
+  end
+
   defp format_details([]) do
     "None"
   end
