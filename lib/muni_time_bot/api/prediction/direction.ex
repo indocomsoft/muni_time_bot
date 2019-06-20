@@ -15,6 +15,10 @@ defmodule MuniTimeBot.API.Prediction.Direction do
 
   @spec new(any()) :: {:ok, t()} | {:error, any()}
 
+  def new(api_raw = %{"prediction" => detail}) when is_map(detail) do
+    new(%{api_raw | "prediction" => [detail]})
+  end
+
   def new(%{"title" => title, "prediction" => details})
       when is_list(details) and is_binary(title) do
     details
@@ -30,13 +34,6 @@ defmodule MuniTimeBot.API.Prediction.Direction do
 
       {:error, reason} ->
         {:error, reason}
-    end
-  end
-
-  def new(%{"title" => title, "prediction" => detail}) when is_map(detail) and is_binary(title) do
-    case Detail.new(detail) do
-      {:ok, detail = %Detail{}} -> {:ok, %__MODULE__{title: title, details: [detail]}}
-      {:error, reason} -> {:error, reason}
     end
   end
 

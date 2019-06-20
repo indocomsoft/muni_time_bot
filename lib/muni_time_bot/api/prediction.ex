@@ -24,6 +24,10 @@ defmodule MuniTimeBot.API.Prediction do
      }}
   end
 
+  def new(api_raw = %{"direction" => direction}) when is_map(direction) do
+    new(%{api_raw | "direction" => [direction]})
+  end
+
   def new(%{"routeTitle" => route_title, "direction" => directions})
       when is_list(directions) and is_binary(route_title) do
     directions
@@ -36,17 +40,6 @@ defmodule MuniTimeBot.API.Prediction do
     |> case do
       directions when is_list(directions) ->
         {:ok, %__MODULE__{route_title: route_title, directions: directions}}
-
-      {:error, reason} ->
-        {:error, reason}
-    end
-  end
-
-  def new(%{"routeTitle" => route_title, "direction" => direction})
-      when is_map(direction) and is_binary(route_title) do
-    case Direction.new(direction) do
-      {:ok, direction = %Direction{}} ->
-        {:ok, %__MODULE__{route_title: route_title, directions: [direction]}}
 
       {:error, reason} ->
         {:error, reason}
