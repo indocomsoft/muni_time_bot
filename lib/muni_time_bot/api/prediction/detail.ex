@@ -11,6 +11,7 @@ defmodule MuniTimeBot.API.Prediction.Detail do
           is_delayed: boolean()
         }
 
+  @spec new(any()) :: {:ok, t()} | {:error, __MODULE__}
   def new(raw_api = %{"minutes" => minutes, "seconds" => seconds, "epochTime" => epoch_time})
       when is_binary(minutes) and is_binary(seconds) and is_binary(epoch_time) do
     with {integer_minutes, _} <- Integer.parse(minutes),
@@ -38,6 +39,7 @@ defmodule MuniTimeBot.API.Prediction.Detail do
     {:error, __MODULE__}
   end
 
+  @spec parse_boolean(String.t()) :: boolean()
   defp parse_boolean("true"), do: true
   defp parse_boolean(_), do: false
 end

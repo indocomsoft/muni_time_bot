@@ -9,6 +9,8 @@ defmodule MuniTimeBot.API.Prediction.Direction do
           details: [Detail.t()]
         }
 
+  @spec new(any()) :: {:ok, t()} | {:error, any()}
+
   def new(%{"title" => title, "prediction" => details})
       when is_list(details) and is_binary(title) do
     details

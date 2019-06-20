@@ -48,6 +48,7 @@ defmodule MuniTimeBot.StopsWorker do
   end
 
   # Client
+  @spec all_stops :: [Stop.t()]
   def all_stops do
     GenServer.call(__MODULE__, :get)
   end

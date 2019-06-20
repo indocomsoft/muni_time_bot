@@ -9,6 +9,8 @@ defmodule MuniTimeBot.API.Prediction do
           directions: [Direction.t()]
         }
 
+  @spec new(any()) :: {:ok, t()} | {:error, any()}
+
   def new(%{"routeTitle" => route_title, "dirTitleBecauseNoPredictions" => direction_title})
       when is_binary(route_title) and is_binary(direction_title) do
     {:ok,

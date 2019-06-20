@@ -58,6 +58,7 @@ defmodule MuniTimeBot do
     end
   end
 
+  @spec format_details(list()) :: String.t()
   defp format_details([]) do
     "None"
   end

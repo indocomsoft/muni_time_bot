@@ -72,7 +72,7 @@ defmodule MuniTimeBot.API.Stop do
     :error
   end
 
-  @spec predictions(t()) :: {:ok, [Prediction.t()]} | :error
+  @spec predictions(t()) :: {:ok, [Prediction.t()]} | {:error, any()}
   def predictions(%__MODULE__{stop_id: stop_id}) when is_binary(stop_id) do
     case API.request_muni(%{command: "predictions", stopId: stop_id}) do
       {:ok, %{"predictions" => raw_predictions}} when is_list(raw_predictions) ->
