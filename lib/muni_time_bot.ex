@@ -3,6 +3,7 @@ defmodule MuniTimeBot do
   Documentation for MuniTimeBot.
   """
 
+  alias MuniTimeBot.StopsWorker
   alias MuniTimeBot.API.Stop
   alias MuniTimeBot.Coordinate
 
@@ -25,34 +26,35 @@ defmodule MuniTimeBot do
   end
 
   def handle(command = {:location, %{latitude: latitude, longitude: longitude}}, cnt) do
-    with {:ok, stops} <- Stop.all_stops(),
-         {:ok, my_coord} <- Coordinate.new(latitude, longitude) do
-      message =
-        stops
-        |> Enum.map(fn stop = %Stop{coordinate: coordinate} ->
-          {Coordinate.distance(my_coord, coordinate), stop}
-        end)
-        |> Enum.sort_by(fn {distance, _stop} -> distance end)
-        |> Enum.take(5)
-        |> Enum.map(fn {distance, stop = %Stop{title: title, stop_id: stop_id}} ->
-          "*#{title}* (#{Float.round(distance, 2)} m, stopId #{stop_id})\n" <>
-            case Stop.predictions(stop) do
-              {:ok, predictions} ->
-                for %{directions: directions, route_title: route_title} <- predictions,
-                    %{details: details, title: direction_title} <- directions do
-                  "#{route_title} #{direction_title}\n`#{format_details(details)}`"
-                end
-                |> Enum.join("\n")
+    case Coordinate.new(latitude, longitude) do
+      {:ok, my_coord} ->
+        message =
+          StopsWorker.all_stops()
+          |> Enum.map(fn stop = %Stop{coordinate: coordinate} ->
+            {Coordinate.distance(my_coord, coordinate), stop}
+          end)
+          |> Enum.sort_by(fn {distance, _stop} -> distance end)
+          |> Enum.take(5)
+          |> Enum.map(fn {distance, stop = %Stop{title: title, stop_id: stop_id}} ->
+            "*#{title}* (#{Float.round(distance, 2)} m, stopId #{stop_id})\n" <>
+              case Stop.predictions(stop) do
+                {:ok, predictions} ->
+                  for %{directions: directions, route_title: route_title} <- predictions,
+                      %{details: details, title: direction_title} <- directions do
+                    "#{route_title} #{direction_title}\n`#{format_details(details)}`"
+                  end
+                  |> Enum.join("\n")
 
-              {:error, _} ->
-                "Error retrieving data"
-            end
-        end)
-        |> Enum.join("\n\n")
+                {:error, _} ->
+                  "Error retrieving data"
+              end
+          end)
+          |> Enum.join("\n\n")
 
-      answer(cnt, message, parse_mode: "markdown")
-    else
-      _ -> handle(command, cnt)
+        answer(cnt, message, parse_mode: "markdown")
+
+      _ ->
+        handle(command, cnt)
     end
   end
 

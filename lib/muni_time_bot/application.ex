@@ -8,7 +8,8 @@ defmodule MuniTimeBot.Application do
 
     children = [
       ExGram,
-      {MuniTimeBot, [method: :polling, token: token]}
+      {MuniTimeBot, [method: :polling, token: token]},
+      MuniTimeBot.StopsWorker
     ]
 
     opts = [strategy: :one_for_one, name: MuniTimeBot.Supervisor]
