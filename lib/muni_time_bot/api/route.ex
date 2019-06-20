@@ -1,4 +1,8 @@
 defmodule MuniTimeBot.API.Route do
+  @moduledoc """
+  Provides an abstraction over a route in the NextBus API.
+  """
+
   @enforce_keys ~w(tag title)a
   defstruct @enforce_keys ++ ~w(stops inbound_route outbound_route)a
 

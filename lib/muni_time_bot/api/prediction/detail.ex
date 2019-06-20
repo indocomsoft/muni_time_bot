@@ -1,4 +1,8 @@
 defmodule MuniTimeBot.API.Prediction.Detail do
+  @moduledoc """
+  Provides an abstraction over a prediction detail in the NextBus API.
+  """
+
   @enforce_keys ~w(minutes seconds epoch_time is_departure is_schedule_based is_delayed)a
   defstruct @enforce_keys
 

@@ -1,4 +1,8 @@
 defmodule MuniTimeBot.API.Prediction.Direction do
+  @moduledoc """
+  Provides an abstraction over a prediction direction in the NextBus API.
+  """
+
   @enforce_keys ~w(title details)a
   defstruct @enforce_keys
 

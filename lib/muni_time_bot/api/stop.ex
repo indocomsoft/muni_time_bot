@@ -1,4 +1,8 @@
 defmodule MuniTimeBot.API.Stop do
+  @moduledoc """
+  Provides an abstraction over a stop in the NextBus API.
+  """
+
   @enforce_keys ~w(stop_id coordinate tag route title)a
   defstruct @enforce_keys
 

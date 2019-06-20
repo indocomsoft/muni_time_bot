@@ -1,6 +1,10 @@
 defmodule MuniTimeBot.StopsWorker do
+  @moduledoc """
+  This module caches the list of all stops and periodically updates the list.
+  """
+
   # 1 day
-  @interval 86400 * 1000
+  @interval 86_400 * 1000
 
   # 1 hour
   @retry_interval 3600 * 1000
